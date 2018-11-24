@@ -5,7 +5,7 @@ using MemExchange.Core.SharedDto.ServerToClient;
 using MemExchange.Server.Outgoing;
 using MemExchange.Server.Processor.Book.Orders;
 using NUnit.Framework;
-using Rhino.Mocks;
+using Moq;
 
 namespace MemExchange.Tests.Server
 {
@@ -13,16 +13,16 @@ namespace MemExchange.Tests.Server
     public class OutgoingQueueTests
     {
 
-        private IMessagePublisher messagePublisherMock;
-        private ILogger loggerMock;
+        private Mock<IMessagePublisher> messagePublisherMock;
+        private Mock<ILogger> loggerMock;
         private IOutgoingQueue outgoingQueue;
 
         [SetUp]
         public void Setup()
         {
-            messagePublisherMock = MockRepository.GenerateMock<IMessagePublisher>();
-            loggerMock = MockRepository.GenerateMock<ILogger>();
-            outgoingQueue = new OutgoingQueue(loggerMock, messagePublisherMock);
+            messagePublisherMock = new Mock<IMessagePublisher>();
+            loggerMock = new Mock<ILogger>();
+            outgoingQueue = new OutgoingQueue(loggerMock.Object, messagePublisherMock.Object);
             outgoingQueue.Start();
         }
 
@@ -40,15 +40,15 @@ namespace MemExchange.Tests.Server
             outgoingQueue.EnqueueAddedLimitOrder(limitOrder);
 
             Thread.Sleep(100);
-            messagePublisherMock.AssertWasCalled(a => a.OnNext(Arg<ServerToClientMessage>.Matches(b => 
+            messagePublisherMock.Verify(a => a.OnEvent(It.Is<ServerToClientMessage>(b => 
                 b.MessageType == ServerToClientMessageTypeEnum.LimitOrderAccepted
                 && b.LimitOrder.ClientId == 90
                 && b.LimitOrder.Price == 20d
                 && b.LimitOrder.Quantity == 21
                 && b.LimitOrder.Symbol == "ABC"
                 && b.LimitOrder.Way == WayEnum.Buy),
-                Arg<long>.Is.Anything,
-                Arg<bool>.Is.Anything), options => options.Repeat.Once());
+                It.IsAny<long>(),
+                It.IsAny<bool>()), Times.Once);
         }
 
         [Test]
@@ -59,15 +59,15 @@ namespace MemExchange.Tests.Server
             outgoingQueue.EnqueueUpdatedLimitOrder(limitOrder, 21, 20d);
 
             Thread.Sleep(100);
-            messagePublisherMock.AssertWasCalled(a => a.OnNext(Arg<ServerToClientMessage>.Matches(b =>
+            messagePublisherMock.Verify(a => a.OnEvent(It.Is<ServerToClientMessage>(b =>
                 b.MessageType == ServerToClientMessageTypeEnum.LimitOrderChanged
                 && b.LimitOrder.ClientId == 90
                 && b.LimitOrder.Price == 20d
                 && b.LimitOrder.Quantity == 21
                 && b.LimitOrder.Symbol == "ABC"
                 && b.LimitOrder.Way == WayEnum.Buy),
-                Arg<long>.Is.Anything,
-                Arg<bool>.Is.Anything), options => options.Repeat.Once());
+                It.IsAny<long>(),
+                It.IsAny<bool>()), Times.Once);
         }
 
         [Test]
@@ -78,15 +78,15 @@ namespace MemExchange.Tests.Server
             outgoingQueue.EnqueueDeletedLimitOrder(limitOrder);
 
             Thread.Sleep(100);
-            messagePublisherMock.AssertWasCalled(a => a.OnNext(Arg<ServerToClientMessage>.Matches(b =>
+            messagePublisherMock.Verify(a => a.OnEvent(It.Is<ServerToClientMessage>(b =>
                 b.MessageType == ServerToClientMessageTypeEnum.LimitOrderDeleted
                 && b.LimitOrder.ClientId == 90
                 && b.LimitOrder.Price == 20d
                 && b.LimitOrder.Quantity == 21
                 && b.LimitOrder.Symbol == "ABC"
                 && b.LimitOrder.Way == WayEnum.Buy),
-                Arg<long>.Is.Anything,
-                Arg<bool>.Is.Anything), options => options.Repeat.Once());
+                It.IsAny<long>(),
+                It.IsAny<bool>()), Times.Once);
         }
 
     }

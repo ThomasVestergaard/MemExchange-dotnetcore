@@ -5,8 +5,9 @@ using MemExchange.Server.Common;
 using MemExchange.Server.Processor.Book.Executions;
 using MemExchange.Server.Processor.Book.MatchingAlgorithms;
 using MemExchange.Server.Processor.Book.Orders;
+using Moq;
 using NUnit.Framework;
-using Rhino.Mocks;
+
 
 namespace MemExchange.Tests.Server.Book
 {
@@ -14,19 +15,19 @@ namespace MemExchange.Tests.Server.Book
     [TestFixture]
     public class LimitOrderMatchingAlgorithmTests
     {
-        private IDateService dateServiceMock;
+        private Mock<IDateService> dateServiceMock;
 
         [SetUp]
         public void Setup()
         {
-            dateServiceMock = MockRepository.GenerateMock<IDateService>();
+            dateServiceMock = new Mock<IDateService>();
         }
 
         [Test]
         public void ShouldNotMatchHigherSellOrderWithLowerBuyOrder()
         {
             var generatedExecutions = new List<INewExecution>();
-            var algo = new LimitOrderMatchingAlgorithm(dateServiceMock);
+            var algo = new LimitOrderMatchingAlgorithm(dateServiceMock.Object);
             algo.AddExecutionsHandler(generatedExecutions.Add);
 
             ILimitOrder sellOrder = new LimitOrder("ABC", 10, 100, WayEnum.Sell, 13);
@@ -40,7 +41,7 @@ namespace MemExchange.Tests.Server.Book
         public void ShouldNotMatchOrdersWithDifferentSymbols()
         {
             var generatedExecutions = new List<INewExecution>();
-            var algo = new LimitOrderMatchingAlgorithm(dateServiceMock);
+            var algo = new LimitOrderMatchingAlgorithm(dateServiceMock.Object);
             algo.AddExecutionsHandler(generatedExecutions.Add);
 
             ILimitOrder sellOrder = new LimitOrder("ABC", 10, 90, WayEnum.Sell, 13);
@@ -54,7 +55,7 @@ namespace MemExchange.Tests.Server.Book
         public void ShouldNotMatchOrdersWithZeroQuantity()
         {
             var generatedExecutions = new List<INewExecution>();
-            var algo = new LimitOrderMatchingAlgorithm(dateServiceMock);
+            var algo = new LimitOrderMatchingAlgorithm(dateServiceMock.Object);
             algo.AddExecutionsHandler(generatedExecutions.Add);
 
             ILimitOrder sellOrder = new LimitOrder("ABC", 0, 90, WayEnum.Sell, 13);
@@ -74,10 +75,10 @@ namespace MemExchange.Tests.Server.Book
         public void ShouldGenerateExecutionWithSamePriceAsBuyAndSell()
         {
             var staticDatetimeOffset = DateTimeOffset.UtcNow;
-            dateServiceMock.Stub(a => a.UtcNow()).Return(staticDatetimeOffset);
+            dateServiceMock.Setup(a => a.UtcNow()).Returns(staticDatetimeOffset);
 
             var generatedExecutions = new List<INewExecution>();
-            var algo = new LimitOrderMatchingAlgorithm(dateServiceMock);
+            var algo = new LimitOrderMatchingAlgorithm(dateServiceMock.Object);
             algo.AddExecutionsHandler(generatedExecutions.Add);
 
             ILimitOrder sellOrder = new LimitOrder("ABC", 10, 90, WayEnum.Sell, 13);
@@ -97,10 +98,10 @@ namespace MemExchange.Tests.Server.Book
         public void ShouldExecuteOnMidpointPrice()
         {
             var staticDatetimeOffset = DateTimeOffset.UtcNow;
-            dateServiceMock.Stub(a => a.UtcNow()).Return(staticDatetimeOffset);
+            dateServiceMock.Setup(a => a.UtcNow()).Returns(staticDatetimeOffset);
 
             var generatedExecutions = new List<INewExecution>();
-            var algo = new LimitOrderMatchingAlgorithm(dateServiceMock);
+            var algo = new LimitOrderMatchingAlgorithm(dateServiceMock.Object);
             algo.AddExecutionsHandler(generatedExecutions.Add);
 
             ILimitOrder sellOrder = new LimitOrder("ABC", 10, 90, WayEnum.Sell, 13);
@@ -120,10 +121,10 @@ namespace MemExchange.Tests.Server.Book
         public void ShouldExecuteOnLowestQuantity()
         {
             var staticDatetimeOffset = DateTimeOffset.UtcNow;
-            dateServiceMock.Stub(a => a.UtcNow()).Return(staticDatetimeOffset);
+            dateServiceMock.Setup(a => a.UtcNow()).Returns(staticDatetimeOffset);
 
             var generatedExecutions = new List<INewExecution>();
-            var algo = new LimitOrderMatchingAlgorithm(dateServiceMock);
+            var algo = new LimitOrderMatchingAlgorithm(dateServiceMock.Object);
             algo.AddExecutionsHandler(generatedExecutions.Add);
 
             ILimitOrder sellOrder = new LimitOrder("ABC", 40, 90, WayEnum.Sell, 13);
@@ -138,10 +139,10 @@ namespace MemExchange.Tests.Server.Book
         public void OrdersShouldHaveModifiedQuantitiesAfterMatch()
         {
             var staticDatetimeOffset = DateTimeOffset.UtcNow;
-            dateServiceMock.Stub(a => a.UtcNow()).Return(staticDatetimeOffset);
+            dateServiceMock.Setup(a => a.UtcNow()).Returns(staticDatetimeOffset);
 
             var generatedExecutions = new List<INewExecution>();
-            var algo = new LimitOrderMatchingAlgorithm(dateServiceMock);
+            var algo = new LimitOrderMatchingAlgorithm(dateServiceMock.Object);
             algo.AddExecutionsHandler(generatedExecutions.Add);
 
             ILimitOrder sellOrder = new LimitOrder("ABC", 40, 90, WayEnum.Sell, 13);
@@ -156,10 +157,10 @@ namespace MemExchange.Tests.Server.Book
         public void OrdersShouldNotHaveModifiedQuantitiesAfterNoMatch()
         {
             var staticDatetimeOffset = DateTimeOffset.UtcNow;
-            dateServiceMock.Stub(a => a.UtcNow()).Return(staticDatetimeOffset);
+            dateServiceMock.Setup(a => a.UtcNow()).Returns(staticDatetimeOffset);
 
             var generatedExecutions = new List<INewExecution>();
-            var algo = new LimitOrderMatchingAlgorithm(dateServiceMock);
+            var algo = new LimitOrderMatchingAlgorithm(dateServiceMock.Object);
             algo.AddExecutionsHandler(generatedExecutions.Add);
 
             ILimitOrder sellOrder = new LimitOrder("ABC", 40, 91, WayEnum.Sell, 13);

@@ -3,20 +3,21 @@ using MemExchange.Server.Common;
 using MemExchange.Server.Outgoing;
 using MemExchange.Server.Processor.Book;
 using MemExchange.Server.Processor.Book.MatchingAlgorithms;
+using Moq;
 using NUnit.Framework;
-using Rhino.Mocks;
+
 
 namespace MemExchange.Tests.Server.Book
 {
     [TestFixture]
     public class RepositoryBookAlgoIntegrationTests
     {
-        private IOutgoingQueue outgoingQueueMock;
+        private Mock<IOutgoingQueue> outgoingQueueMock;
 
         [SetUp]
         public void Setup()
         {
-            outgoingQueueMock = MockRepository.GenerateMock<IOutgoingQueue>();
+            outgoingQueueMock = new Mock<IOutgoingQueue>();
         }
 
         [Test]

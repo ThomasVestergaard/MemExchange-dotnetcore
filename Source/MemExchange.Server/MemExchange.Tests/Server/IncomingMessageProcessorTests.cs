@@ -10,33 +10,34 @@ using MemExchange.Server.Processor;
 using MemExchange.Server.Processor.Book;
 using MemExchange.Server.Processor.Book.Orders;
 using NUnit.Framework;
-using Rhino.Mocks;
+using Moq;
+
 
 namespace MemExchange.Tests.Server
 {
     [TestFixture]
     public class IncomingMessageProcessorTests
     {
-        private IOrderRepository ordereRepositoryMock;
-        private IOutgoingQueue outgoingQueueMock;
-        private IDateService dateServiceMock;
-        private IOrderDispatcher orderDispatcherMock;
+        private Mock<IOrderRepository> ordereRepositoryMock;
+        private Mock<IOutgoingQueue> outgoingQueueMock;
+        private Mock<IDateService> dateServiceMock;
+        private Mock<IOrderDispatcher> orderDispatcherMock;
         private ISerializer serializer;
 
         [SetUp]
         public void Setup()
         {
-            ordereRepositoryMock = MockRepository.GenerateMock<IOrderRepository>();
-            outgoingQueueMock = MockRepository.GenerateMock<IOutgoingQueue>();
-            dateServiceMock = MockRepository.GenerateMock<IDateService>();
-            orderDispatcherMock = MockRepository.GenerateMock<IOrderDispatcher>();
+            ordereRepositoryMock = new Mock<IOrderRepository>();
+            outgoingQueueMock = new Mock<IOutgoingQueue>();
+            dateServiceMock = new Mock<IDateService>();
+            orderDispatcherMock = new Mock<IOrderDispatcher>();
             serializer = new ProtobufSerializer();
         }
 
         [Test]
         public void ShouldNotCallDispatcherIfOrderDoesNotValidate()
         {
-            var processor = new IncomingMessageProcessor(ordereRepositoryMock, outgoingQueueMock, dateServiceMock, orderDispatcherMock, serializer);
+            var processor = new IncomingMessageProcessor(ordereRepositoryMock.Object, outgoingQueueMock.Object, dateServiceMock.Object, orderDispatcherMock.Object, serializer);
 
             var invalidLimitOrder = new LimitOrderDto();
             invalidLimitOrder.Reeset();
@@ -54,16 +55,17 @@ namespace MemExchange.Tests.Server
             var queueItem = new RingbufferByteArray();
             queueItem.Set(messageBytes);
 
-            processor.OnNext(queueItem, 1, true);
+            processor.OnEvent(queueItem, 1, true);
 
-            orderDispatcherMock.AssertWasNotCalled(a => a.HandleAddLimitOrder(Arg<ILimitOrder>.Is.Anything));
-            outgoingQueueMock.AssertWasNotCalled(a => a.EnqueueAddedLimitOrder(Arg<ILimitOrder>.Is.Anything));
+            orderDispatcherMock.Verify(a => a.HandleAddLimitOrder(It.IsAny<ILimitOrder>()), Times.Never);
+            outgoingQueueMock.Verify(a => a.EnqueueAddedLimitOrder(It.IsAny<ILimitOrder>()), Times.Never);
+            
         }
 
         [Test]
         public void ShouldCallDispatcherWhenLimitOrderValidates()
         {
-            var processor = new IncomingMessageProcessor(ordereRepositoryMock, outgoingQueueMock, dateServiceMock, orderDispatcherMock, serializer);
+            var processor = new IncomingMessageProcessor(ordereRepositoryMock.Object, outgoingQueueMock.Object, dateServiceMock.Object, orderDispatcherMock.Object, serializer);
 
             var limitOrder = new LimitOrderDto();
             limitOrder.Reeset();
@@ -88,15 +90,22 @@ namespace MemExchange.Tests.Server
             var queueItem = new RingbufferByteArray();
             queueItem.Set(messageBytes);
 
-            processor.OnNext(queueItem, 1, true);
+            processor.OnEvent(queueItem, 1, true);
 
-            orderDispatcherMock.AssertWasCalled(a => a.HandleAddLimitOrder(Arg<ILimitOrder>.Is.Equal(limitOrder)));
+            orderDispatcherMock.Verify(a => a.HandleAddLimitOrder(It.Is<ILimitOrder>(order => 
+                order.Symbol == limitOrder.Symbol &&
+                order.Price == limitOrder.Price &&
+                order.Quantity == limitOrder.Quantity &&
+                order.ClientId == limitOrder.ClientId &&
+                order.Way == limitOrder.Way
+                
+                )), Times.Once);
         }
 
         [Test]
         public void ShouldNotCallDispatcherWhenLimitOrderIsInvalid()
         {
-            var processor = new IncomingMessageProcessor(ordereRepositoryMock, outgoingQueueMock, dateServiceMock, orderDispatcherMock, serializer);
+            var processor = new IncomingMessageProcessor(ordereRepositoryMock.Object, outgoingQueueMock.Object, dateServiceMock.Object, orderDispatcherMock.Object, serializer);
 
             var limitOrder = new LimitOrderDto();
             limitOrder.Reeset();
@@ -121,14 +130,14 @@ namespace MemExchange.Tests.Server
             var queueItem = new RingbufferByteArray();
             queueItem.Set(messageBytes);
 
-            processor.OnNext(queueItem, 1, true);
-            orderDispatcherMock.AssertWasNotCalled(a => a.HandleAddLimitOrder(Arg<ILimitOrder>.Is.Anything));
+            processor.OnEvent(queueItem, 1, true);
+            orderDispatcherMock.Verify(a => a.HandleAddLimitOrder(It.IsAny<ILimitOrder>()), Times.Never);
         }
         
         [Test]
         public void ShouldNotCallDispatcherWhenLimitOrderIsInvalidOnCancelOrder()
         {
-            var processor = new IncomingMessageProcessor(ordereRepositoryMock, outgoingQueueMock, dateServiceMock, orderDispatcherMock, serializer);
+            var processor = new IncomingMessageProcessor(ordereRepositoryMock.Object, outgoingQueueMock.Object, dateServiceMock.Object, orderDispatcherMock.Object, serializer);
 
             var limitOrder = new LimitOrderDto();
             limitOrder.Reeset();
@@ -147,9 +156,9 @@ namespace MemExchange.Tests.Server
             var queueItem = new RingbufferByteArray();
             queueItem.Set(messageBytes);
 
-            processor.OnNext(queueItem, 1, true);
+            processor.OnEvent(queueItem, 1, true);
 
-            orderDispatcherMock.AssertWasNotCalled(a => a.HandleAddLimitOrder(Arg<ILimitOrder>.Is.Anything));
+            orderDispatcherMock.Verify(a => a.HandleAddLimitOrder(It.IsAny<ILimitOrder>()), Times.Never());
         }
 
        
