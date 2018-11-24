@@ -7,6 +7,7 @@
 
   <ItemGroup>
     <PackageReference Include="Disruptor" Version="3.3.8" />
+    <PackageReference Include="NetMQ" Version="4.0.0.197-pre" />
     <PackageReference Include="protobuf-net" Version="2.4.0" />
     <PackageReference Include="Serilog" Version="2.7.1" />
   </ItemGroup>
