@@ -11,7 +11,6 @@ namespace MemExchange.ClientApi.Commands
     {
         private readonly ILogger logger;
         private readonly ISerializer serializer;
-        private NetMQContext ctx;
         private PushSocket pushSocket;
 
         public MessageConnection(ILogger logger, ISerializer serializer)
@@ -22,10 +21,11 @@ namespace MemExchange.ClientApi.Commands
 
         public void Start(string serverIpAddress, int serverPort)
         {
-            ctx = NetMQContext.Create();
-            pushSocket = ctx.CreatePushSocket();
+            
+            
             
             string serverAddress = string.Format("tcp://{0}:{1}", serverIpAddress, serverPort);
+            pushSocket = new PushSocket();
             pushSocket.Connect(serverAddress);
         }
 
@@ -39,12 +39,15 @@ namespace MemExchange.ClientApi.Commands
             if (message == null)
                 return;
 
-            if (ctx == null || pushSocket == null)
+            if (pushSocket == null)
                 return;
             
             try
             {
-                pushSocket.Send(serializer.Serialize(message));
+                var data = serializer.Serialize(message);
+                var msg = new Msg();
+                msg.InitGC(data, 0, data.Length);
+                pushSocket.Send(ref msg, false);
             }
             catch (Exception ex)
             {

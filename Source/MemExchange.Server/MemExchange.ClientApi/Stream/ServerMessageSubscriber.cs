@@ -16,7 +16,6 @@ namespace MemExchange.ClientApi.Stream
         private Thread receiveThread;
         private bool isRunning;
 
-        private NetMQContext ctx;
         private SubscriberSocket subscribeSocket;
 
         private Action<ServerToClientMessage> messageHandler { get; set; }
@@ -31,8 +30,8 @@ namespace MemExchange.ClientApi.Stream
         public void Start(string serverAddress, int serverPublishPort, int clientId, Action<ServerToClientMessage> messageHandler)
         {
             this.messageHandler = messageHandler;
-            ctx = NetMQContext.Create();
-            subscribeSocket = ctx.CreateSubscriberSocket();
+
+            subscribeSocket = new SubscriberSocket();
             subscribeSocket.Connect(string.Format("tcp://{0}:{1}", serverAddress, serverPublishPort));
             subscribeSocket.Subscribe(clientId.ToString());
             subscribeSocket.Subscribe("a");
@@ -47,7 +46,7 @@ namespace MemExchange.ClientApi.Stream
         {
             isRunning = false;
             subscribeSocket.Close();
-            ctx.Dispose();
+            subscribeSocket.Dispose();
 
             receiveThread.Join(100);
             logger.Info("Server message subscriber stopped");
