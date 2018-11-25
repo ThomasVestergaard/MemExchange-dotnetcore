@@ -67,7 +67,7 @@ exchangeClient.Stop();
 ## Solution overview
 
 | Project | .NET version | What is it |
-| ------------- | ------------- |
+| ------------- | ------------- | ------------- |
 | MemExchange.Core | .NET Core 2.1 | Stuff used by client and server |
 | MemExchange.ClientApi | .NET Standard 2.0 | Api wrapper used in client |
 | MemExchange.Server | .NET Core 2.1 | The server |
