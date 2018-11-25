@@ -16,6 +16,7 @@ Running locally (blog): http://thomasvestergaard.com/thomas-vestergaard-blog/mem
 1. Make server container ready
    - Introduce external message queue (NATS)
    - Remove dependency on disruptor-net framework
+   - Make server handle single symbol (one running serverp er symbol as scale out model)
    - Publish server container on dockerhub
 2. Introduce external cache for orderbook, client orders, trades etc.
    - Maybe redis?
