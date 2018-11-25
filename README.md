@@ -5,11 +5,23 @@ This is a simple server-client library that simulates a stock exchange.
 The exchange supports market order, limit orders and stop-limit orders.
 There is no authentication or other security measures build in. It's made solely for research, paper-trade and showcase purposes.
 
-#Project state: 
+# Project state: 
 Feature complete beta is released. There are probably a few issues here and there which I hope to discover over time while using it. Once these have been identified and fixed, a stable release 1.0 will be issued.
 
 Project website (blog): http://thomasvestergaard.com/thomas-vestergaard-blog/memexchange/what-is-memexchange/
 Running locally (blog): http://thomasvestergaard.com/thomas-vestergaard-blog/memexchange/getting-started-with-memexchange/
+
+# Roadmap
+
+1. Make server container ready
+   - Introduce external message queue (NATS)
+   - Remove dependency on disruptor-net framework
+   - Publish server container on dockerhub
+2. Introduce external cache for orderbook, client orders, trades etc.
+   - Maybe redis?
+3. Introduce http API for all communication with server
+4. Introduce persistance mechanism for server to restore state on crash/restart
+
 
 ## Getting started
 
