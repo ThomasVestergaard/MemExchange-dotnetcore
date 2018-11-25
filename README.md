@@ -65,6 +65,7 @@ exchangeClient.Stop();
 ![alt tag](http://thomasvestergaard.com/media/1010/memexchange_high_level_architechture.jpg)
 
 ## Solution overview
+
 | Project  | .NET version | What is it |
 | ------------- | ------------- |
 | MemExchange.Core  | .NET Core 2.1  |  Stuff used by client and server  |
