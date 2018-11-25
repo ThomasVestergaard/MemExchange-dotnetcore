@@ -13,13 +13,13 @@ Running locally (blog): http://thomasvestergaard.com/thomas-vestergaard-blog/mem
 
 # Roadmap
 
-1. Make server container ready
+1. Introduce external cache for orderbook, client orders, trades etc.
+   - Maybe redis?
+2. Make server container ready
    - Introduce external message queue (NATS)
    - Remove dependency on disruptor-net framework
    - Make server handle single symbol (one running server er symbol as scale out model)
    - Publish server container on dockerhub
-2. Introduce external cache for orderbook, client orders, trades etc.
-   - Maybe redis?
 3. Introduce http API for all communication with server
 4. Introduce persistance mechanism for server to restore state on crash/restart
 
