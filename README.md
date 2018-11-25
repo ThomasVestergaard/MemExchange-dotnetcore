@@ -1,9 +1,6 @@
 # MemExchange-dotnetcore
 C# (.NET core 2.1) container friendly in-memory stock exchange. Client-Server architecture.
 
-# MemExchange
-C# in-memory stock exchange. Client-Server architecture.
-
 This is a simple server-client library that simulates a stock exchange.
 The exchange supports market order, limit orders and stop-limit orders.
 There is no authentication or other security measures build in. It's made solely for research, paper-trade and showcase purposes.
