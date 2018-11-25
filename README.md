@@ -66,13 +66,13 @@ exchangeClient.Stop();
 
 ## Solution overview
 
-| Project  | .NET version | What is it |
+| Project | .NET version | What is it |
 | ------------- | ------------- |
-| MemExchange.Core  | .NET Core 2.1  |  Stuff used by client and server  |
-| MemExchange.ClientApi  | .NET Standard 2.0  |  Api wrapper used in client  |
-| MemExchange.Server  |  .NET Core 2.1  |  The server  |
-| MemExchange.Client.UI  |  .NET 6.1  |  WPF client testing application  |
-| MemExchange.Tests  |  .NET Core 2.1  |  Unit tests of core and server  |
+| MemExchange.Core | .NET Core 2.1 | Stuff used by client and server |
+| MemExchange.ClientApi | .NET Standard 2.0 | Api wrapper used in client |
+| MemExchange.Server | .NET Core 2.1 | The server |
+| MemExchange.Client.UI | .NET 6.1 | WPF client testing application |
+| MemExchange.Tests | .NET Core 2.1 | Unit tests of core and server |
 
 ## Client side features
 - Client should be able to post orders (Limit, stop-limit, market - done
