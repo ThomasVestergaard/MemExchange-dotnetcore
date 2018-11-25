@@ -75,12 +75,6 @@ exchangeClient.Stop();
 | MemExchange.Tests | .NET Core 2.1 | Unit tests of core and server |
 
 
-| Command | Description |
-| --- | --- |
-| git status | List all new or modified files |
-| git diff | Show file differences that haven't been staged |
-
-
 ## Client side features
 - Client should be able to post orders (Limit, stop-limit, market - done
 - Client should be able to modify orders (done - Market orders cannot be modified)
