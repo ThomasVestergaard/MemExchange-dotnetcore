@@ -3,11 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27130.2027
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MemExchange.Server", "MemExchange.Server\MemExchange.Server.csproj", "{03352949-7ACF-482E-ACDE-7D43975738D7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MemExchange.Server", "MemExchange.Server\MemExchange.Server.csproj", "{03352949-7ACF-482E-ACDE-7D43975738D7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MemExchange.Tests", "MemExchange.Tests\MemExchange.Tests.csproj", "{4A25515F-ED54-45F4-8BE5-831B10E3FBC0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MemExchange.Tests", "MemExchange.Tests\MemExchange.Tests.csproj", "{4A25515F-ED54-45F4-8BE5-831B10E3FBC0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MemExchange.Core", "MemExchange.Core\MemExchange.Core.csproj", "{68F6B086-8BA2-4D1E-A2BD-C2159E25333F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MemExchange.ClientApi", "MemExchange.ClientApi\MemExchange.ClientApi.csproj", "{9D1764AA-5657-4ADC-8AE2-66E799124862}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MemExchange.Client.UI", "MemExchange.Client.UI\MemExchange.Client.UI.csproj", "{5907358D-7F17-49C3-8DA4-F2AE58DA2171}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MemExchange.Core", "MemExchange.Core\MemExchange.Core.csproj", "{6E084322-CC9C-4700-9D81-DFCF6E633347}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,10 +27,18 @@ Global
 		{4A25515F-ED54-45F4-8BE5-831B10E3FBC0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4A25515F-ED54-45F4-8BE5-831B10E3FBC0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4A25515F-ED54-45F4-8BE5-831B10E3FBC0}.Release|Any CPU.Build.0 = Release|Any CPU
-		{68F6B086-8BA2-4D1E-A2BD-C2159E25333F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{68F6B086-8BA2-4D1E-A2BD-C2159E25333F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{68F6B086-8BA2-4D1E-A2BD-C2159E25333F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{68F6B086-8BA2-4D1E-A2BD-C2159E25333F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9D1764AA-5657-4ADC-8AE2-66E799124862}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9D1764AA-5657-4ADC-8AE2-66E799124862}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9D1764AA-5657-4ADC-8AE2-66E799124862}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9D1764AA-5657-4ADC-8AE2-66E799124862}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5907358D-7F17-49C3-8DA4-F2AE58DA2171}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5907358D-7F17-49C3-8DA4-F2AE58DA2171}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5907358D-7F17-49C3-8DA4-F2AE58DA2171}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5907358D-7F17-49C3-8DA4-F2AE58DA2171}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6E084322-CC9C-4700-9D81-DFCF6E633347}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6E084322-CC9C-4700-9D81-DFCF6E633347}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6E084322-CC9C-4700-9D81-DFCF6E633347}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6E084322-CC9C-4700-9D81-DFCF6E633347}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
