@@ -41,21 +41,15 @@ namespace MemExchange.Tests.Server
 
             var invalidLimitOrder = new LimitOrderDto();
             invalidLimitOrder.Reeset();
-
-            var messageBytes = serializer.Serialize(new ClientToServerMessageQueueItem
+            
+            var message = new ClientToServerMessage
             {
-                Message = new ClientToServerMessage
-                {
-                    ClientId = 1,
-                    LimitOrder = invalidLimitOrder,
-                    MessageType = ClientToServerMessageTypeEnum.PlaceLimitOrder
-                },
-            });
-
-            var queueItem = new RingbufferByteArray();
-            queueItem.Set(messageBytes);
-
-            processor.OnEvent(queueItem, 1, true);
+                ClientId = 1,
+                LimitOrder = invalidLimitOrder,
+                MessageType = ClientToServerMessageTypeEnum.PlaceLimitOrder
+            };
+            
+            processor.HandleMessage(message);
 
             orderDispatcherMock.Verify(a => a.HandleAddLimitOrder(It.IsAny<ILimitOrder>()), Times.Never);
             outgoingQueueMock.Verify(a => a.EnqueueAddedLimitOrder(It.IsAny<ILimitOrder>()), Times.Never);
@@ -65,8 +59,6 @@ namespace MemExchange.Tests.Server
         [Test]
         public void ShouldCallDispatcherWhenLimitOrderValidates()
         {
-            var processor = new IncomingMessageProcessor(ordereRepositoryMock.Object, outgoingQueueMock.Object, dateServiceMock.Object, orderDispatcherMock.Object, serializer);
-
             var limitOrder = new LimitOrderDto();
             limitOrder.Reeset();
             limitOrder.Symbol = "QQQ";
@@ -75,37 +67,36 @@ namespace MemExchange.Tests.Server
             limitOrder.ClientId = 1;
             limitOrder.Way = WayEnum.Sell;
 
-            var messageBytes = serializer.Serialize(new ClientToServerMessageQueueItem
-            {
-                Message =
+            var processor = new IncomingMessageProcessor(ordereRepositoryMock.Object, outgoingQueueMock.Object, dateServiceMock.Object, orderDispatcherMock.Object, serializer);
 
-                    new ClientToServerMessage
-                    {
-                        ClientId = 1,
-                        LimitOrder = limitOrder,
-                        MessageType = ClientToServerMessageTypeEnum.PlaceLimitOrder
-                    }
-            });
+            ordereRepositoryMock.Setup(a => a.NewLimitOrder(It.IsAny<LimitOrderDto>())).Returns(new LimitOrder(limitOrder.Symbol, limitOrder.Quantity, limitOrder.Price, limitOrder.Way, limitOrder.ClientId));
+            
+            var message =
 
-            var queueItem = new RingbufferByteArray();
-            queueItem.Set(messageBytes);
+                new ClientToServerMessage
+                {
+                    ClientId = 1,
+                    LimitOrder = limitOrder,
+                    MessageType = ClientToServerMessageTypeEnum.PlaceLimitOrder
+                };
 
-            processor.OnEvent(queueItem, 1, true);
+            processor.HandleMessage(message);
 
-            orderDispatcherMock.Verify(a => a.HandleAddLimitOrder(It.Is<ILimitOrder>(order => 
-                order.Symbol == limitOrder.Symbol &&
-                order.Price == limitOrder.Price &&
-                order.Quantity == limitOrder.Quantity &&
-                order.ClientId == limitOrder.ClientId &&
-                order.Way == limitOrder.Way
-                
-                )), Times.Once);
+            orderDispatcherMock.Verify(a => a.HandleAddLimitOrder(It.Is<ILimitOrder>(order =>
+                order.Symbol == "QQQ" &&
+                order.Price == 30 &&
+                order.Quantity == 10 &&
+                order.ClientId == 1 &&
+                order.Way == WayEnum.Sell
+
+            )), Times.Once);
         }
 
         [Test]
         public void ShouldNotCallDispatcherWhenLimitOrderIsInvalid()
         {
-            var processor = new IncomingMessageProcessor(ordereRepositoryMock.Object, outgoingQueueMock.Object, dateServiceMock.Object, orderDispatcherMock.Object, serializer);
+            var processor = new IncomingMessageProcessor(ordereRepositoryMock.Object, outgoingQueueMock.Object,
+                dateServiceMock.Object, orderDispatcherMock.Object, serializer);
 
             var limitOrder = new LimitOrderDto();
             limitOrder.Reeset();
@@ -114,53 +105,44 @@ namespace MemExchange.Tests.Server
             limitOrder.Quantity = -1;
             limitOrder.ClientId = 1;
             limitOrder.Way = WayEnum.Sell;
+            
+            var message =
 
-            var messageBytes = serializer.Serialize(new ClientToServerMessageQueueItem
+                new ClientToServerMessage
                 {
-                    Message =
+                    ClientId = 1,
+                    LimitOrder = limitOrder,
+                    MessageType = ClientToServerMessageTypeEnum.PlaceLimitOrder
+                };
 
-                        new ClientToServerMessage
-                        {
-                            ClientId = 1,
-                            LimitOrder = limitOrder,
-                            MessageType = ClientToServerMessageTypeEnum.PlaceLimitOrder
-                        }
-                });
-
-            var queueItem = new RingbufferByteArray();
-            queueItem.Set(messageBytes);
-
-            processor.OnEvent(queueItem, 1, true);
+            processor.HandleMessage(message);
             orderDispatcherMock.Verify(a => a.HandleAddLimitOrder(It.IsAny<ILimitOrder>()), Times.Never);
         }
-        
+
         [Test]
         public void ShouldNotCallDispatcherWhenLimitOrderIsInvalidOnCancelOrder()
         {
-            var processor = new IncomingMessageProcessor(ordereRepositoryMock.Object, outgoingQueueMock.Object, dateServiceMock.Object, orderDispatcherMock.Object, serializer);
+            var processor = new IncomingMessageProcessor(ordereRepositoryMock.Object, outgoingQueueMock.Object,
+                dateServiceMock.Object, orderDispatcherMock.Object, serializer);
 
             var limitOrder = new LimitOrderDto();
             limitOrder.Reeset();
 
-            var messageBytes = serializer.Serialize(new ClientToServerMessageQueueItem
+
+            var message =
+                new ClientToServerMessage
                 {
-                    Message = 
-                    new ClientToServerMessage
-                    {
-                        ClientId = 1,
-                        LimitOrder = limitOrder,
-                        MessageType = ClientToServerMessageTypeEnum.CancelLimitOrder
-                    }
-                });
+                    ClientId = 1,
+                    LimitOrder = limitOrder,
+                    MessageType = ClientToServerMessageTypeEnum.CancelLimitOrder
+                };
 
-            var queueItem = new RingbufferByteArray();
-            queueItem.Set(messageBytes);
 
-            processor.OnEvent(queueItem, 1, true);
+            processor.HandleMessage(message);
 
             orderDispatcherMock.Verify(a => a.HandleAddLimitOrder(It.IsAny<ILimitOrder>()), Times.Never());
         }
 
-       
+
     }
 }

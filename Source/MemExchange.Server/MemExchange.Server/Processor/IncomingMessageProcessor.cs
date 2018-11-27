@@ -11,60 +11,46 @@ namespace MemExchange.Server.Processor
     {
         private readonly IOrderRepository ordeRepository;
         private readonly IOutgoingQueue outgoingQueue;
-        private readonly IDateService dateService;
         private readonly IOrderDispatcher dispatcher;
-        private readonly ISerializer serializer;
-        private ClientToServerMessage deserializedMessage;
-        private byte[] queueBuffer;
 
         public IncomingMessageProcessor(IOrderRepository ordeRepository, IOutgoingQueue outgoingQueue, IDateService dateService, IOrderDispatcher dispatcher, ISerializer serializer)
         {
             this.ordeRepository = ordeRepository;
             this.outgoingQueue = outgoingQueue;
-            this.dateService = dateService;
             this.dispatcher = dispatcher;
-            this.serializer = serializer;
-            queueBuffer = new byte[512];
+
         }
-        
-        public void OnEvent(RingbufferByteArray data, long sequence, bool endOfBatch)
+
+        public void HandleMessage(ClientToServerMessage clientToServerMessage)
         {
-            data.StartProcessTime = dateService.UtcNow();
-
-            data.GetContent(ref queueBuffer);
-            deserializedMessage = serializer.Deserialize<ClientToServerMessage>(queueBuffer, data.ContentLength);
-
-            if (deserializedMessage == null)
-                return;
-
-            switch (deserializedMessage.MessageType)
+            switch (clientToServerMessage.MessageType)
             {
-               case ClientToServerMessageTypeEnum.ModifyStopLimitOrder:
-                    if (deserializedMessage.ClientId <= 0)
+                case ClientToServerMessageTypeEnum.ModifyStopLimitOrder:
+                    if (clientToServerMessage.ClientId <= 0)
                         break;
 
-                    var stopLimitOrderToModify = ordeRepository.TryGetStopLimitOrder(deserializedMessage.StopLimitOrder.ExchangeOrderId);
+                    var stopLimitOrderToModify = ordeRepository.TryGetStopLimitOrder(clientToServerMessage.StopLimitOrder.ExchangeOrderId);
                     if (stopLimitOrderToModify == null)
                         return;
 
-                    stopLimitOrderToModify.Modify(deserializedMessage.StopLimitOrder.TriggerPrice, deserializedMessage.StopLimitOrder.LimitPrice, deserializedMessage.StopLimitOrder.Quantity);
+                    stopLimitOrderToModify.Modify(clientToServerMessage.StopLimitOrder.TriggerPrice, clientToServerMessage.StopLimitOrder.LimitPrice, clientToServerMessage.StopLimitOrder.Quantity);
                     outgoingQueue.EnqueueUpdatedStopLimitOrder(stopLimitOrderToModify);
 
                     break;
 
-               case ClientToServerMessageTypeEnum.RequestOpenStopLimitOrders:
-                    if (deserializedMessage.ClientId <= 0)
+                case ClientToServerMessageTypeEnum.RequestOpenStopLimitOrders:
+                    if (clientToServerMessage.ClientId <= 0)
                         break;
 
-                    var orders = ordeRepository.GetClientStopLimitOrders(deserializedMessage.ClientId);
+                    var orders = ordeRepository.GetClientStopLimitOrders(clientToServerMessage.ClientId);
                     if (orders.Count == 0)
                         return;
 
-                    outgoingQueue.EnqueueStopLimitOrderSnapshot(deserializedMessage.ClientId, orders);
+                    outgoingQueue.EnqueueStopLimitOrderSnapshot(clientToServerMessage.ClientId, orders);
                     break;
 
                 case ClientToServerMessageTypeEnum.CancelStopLimitOrder:
-                    var stopOrderToCancel = ordeRepository.TryGetStopLimitOrder(deserializedMessage.StopLimitOrder.ExchangeOrderId);
+                    var stopOrderToCancel = ordeRepository.TryGetStopLimitOrder(clientToServerMessage.StopLimitOrder.ExchangeOrderId);
 
                     if (stopOrderToCancel != null)
                     {
@@ -74,46 +60,46 @@ namespace MemExchange.Server.Processor
                     break;
 
                 case ClientToServerMessageTypeEnum.PlaceStopLimitOrder:
-                    if (!deserializedMessage.StopLimitOrder.ValidateForAdd())
+                    if (!clientToServerMessage.StopLimitOrder.ValidateForAdd())
                         return;
 
-                    var newStopLimitOrder = ordeRepository.NewStopLimitOrder(deserializedMessage.StopLimitOrder);
+                    var newStopLimitOrder = ordeRepository.NewStopLimitOrder(clientToServerMessage.StopLimitOrder);
                     dispatcher.HandleAddStopLimitOrder(newStopLimitOrder);
                     break;
 
 
                 case ClientToServerMessageTypeEnum.PlaceMarketOrder:
-                    if (!deserializedMessage.MarketOrder.ValidateForExecute())
+                    if (!clientToServerMessage.MarketOrder.ValidateForExecute())
                         return;
 
-                    var newMarketOrder = ordeRepository.NewMarketOrder(deserializedMessage.MarketOrder);
+                    var newMarketOrder = ordeRepository.NewMarketOrder(clientToServerMessage.MarketOrder);
                     dispatcher.HandleMarketOrder(newMarketOrder);
                     break;
 
                 case ClientToServerMessageTypeEnum.PlaceLimitOrder:
-                    if (!deserializedMessage.LimitOrder.ValidatesForAdd())
+                    if (!clientToServerMessage.LimitOrder.ValidatesForAdd())
                     {
-                        outgoingQueue.EnqueueMessage(deserializedMessage.ClientId, "Error: Limit order was rejected.");
+                        outgoingQueue.EnqueueMessage(clientToServerMessage.ClientId, "Error: Limit order was rejected.");
                         break;
                     }
 
-                    var newLimitOrder = ordeRepository.NewLimitOrder(deserializedMessage.LimitOrder);
+                    var newLimitOrder = ordeRepository.NewLimitOrder(clientToServerMessage.LimitOrder);
                     newLimitOrder.RegisterDeleteNotificationHandler(outgoingQueue.EnqueueDeletedLimitOrder);
                     newLimitOrder.RegisterModifyNotificationHandler(outgoingQueue.EnqueueUpdatedLimitOrder);
                     newLimitOrder.RegisterFilledNotification(outgoingQueue.EnqueueDeletedLimitOrder);
                     newLimitOrder.RegisterFilledNotification((order) => order.Delete());
 
                     dispatcher.HandleAddLimitOrder(newLimitOrder);
-                break;
+                    break;
 
                 case ClientToServerMessageTypeEnum.CancelLimitOrder:
-                if (!deserializedMessage.LimitOrder.ValidateForDelete())
+                    if (!clientToServerMessage.LimitOrder.ValidateForDelete())
                     {
-                        outgoingQueue.EnqueueMessage(deserializedMessage.ClientId, "Error: Cancellation of limit order was rejected.");
+                        outgoingQueue.EnqueueMessage(clientToServerMessage.ClientId, "Error: Cancellation of limit order was rejected.");
                         break;
                     }
 
-                var orderToDelete = ordeRepository.TryGetLimitOrder(deserializedMessage.LimitOrder.ExchangeOrderId);
+                    var orderToDelete = ordeRepository.TryGetLimitOrder(clientToServerMessage.LimitOrder.ExchangeOrderId);
                     if (orderToDelete != null)
                     {
                         orderToDelete.Delete();
@@ -122,29 +108,29 @@ namespace MemExchange.Server.Processor
                     break;
 
                 case ClientToServerMessageTypeEnum.ModifyLimitOrder:
-                    if (!deserializedMessage.LimitOrder.ValidatesForModify())
+                    if (!clientToServerMessage.LimitOrder.ValidatesForModify())
                     {
-                        outgoingQueue.EnqueueMessage(deserializedMessage.ClientId, "Error: Modification of limit order was rejected.");
+                        outgoingQueue.EnqueueMessage(clientToServerMessage.ClientId, "Error: Modification of limit order was rejected.");
                         break;
                     }
 
-                    var orderToModify = ordeRepository.TryGetLimitOrder(deserializedMessage.LimitOrder.ExchangeOrderId);
+                    var orderToModify = ordeRepository.TryGetLimitOrder(clientToServerMessage.LimitOrder.ExchangeOrderId);
                     if (orderToModify != null)
-                        orderToModify.Modify(deserializedMessage.LimitOrder.Quantity, deserializedMessage.LimitOrder.Price);
+                        orderToModify.Modify(clientToServerMessage.LimitOrder.Quantity, clientToServerMessage.LimitOrder.Price);
                     break;
 
                 case ClientToServerMessageTypeEnum.RequestOpenLimitOrders:
-                    if (deserializedMessage.ClientId <= 0)
+                    if (clientToServerMessage.ClientId <= 0)
                         break;
 
-                    var orderList = ordeRepository.GetClientStopLimitOrders(deserializedMessage.ClientId);
-                    outgoingQueue.EnqueueStopLimitOrderSnapshot(deserializedMessage.ClientId, orderList);
+                    var orderList = ordeRepository.GetClientStopLimitOrders(clientToServerMessage.ClientId);
+                    outgoingQueue.EnqueueStopLimitOrderSnapshot(clientToServerMessage.ClientId, orderList);
                     break;
 
 
                 case ClientToServerMessageTypeEnum.DuoLimitOrderUpdate:
-                    var order1ToModify = ordeRepository.TryGetLimitOrder(deserializedMessage.DuoLimitOrder.LimitOrder1.ExchangeOrderId);
-                    var order2ToModify = ordeRepository.TryGetLimitOrder(deserializedMessage.DuoLimitOrder.LimitOrder2.ExchangeOrderId);
+                    var order1ToModify = ordeRepository.TryGetLimitOrder(clientToServerMessage.DuoLimitOrder.LimitOrder1.ExchangeOrderId);
+                    var order2ToModify = ordeRepository.TryGetLimitOrder(clientToServerMessage.DuoLimitOrder.LimitOrder2.ExchangeOrderId);
 
                     if (order1ToModify == null || order2ToModify == null)
                         return;
@@ -153,18 +139,20 @@ namespace MemExchange.Server.Processor
                         return;
 
                     dispatcher.HandDuoLimitOrderUpdate(
-                        order1ToModify, 
-                        deserializedMessage.DuoLimitOrder.LimitOrder1.Price,
-                        deserializedMessage.DuoLimitOrder.LimitOrder1.Quantity,
+                        order1ToModify,
+                        clientToServerMessage.DuoLimitOrder.LimitOrder1.Price,
+                        clientToServerMessage.DuoLimitOrder.LimitOrder1.Quantity,
                         order2ToModify,
-                        deserializedMessage.DuoLimitOrder.LimitOrder2.Price,
-                        deserializedMessage.DuoLimitOrder.LimitOrder2.Quantity);
+                        clientToServerMessage.DuoLimitOrder.LimitOrder2.Price,
+                        clientToServerMessage.DuoLimitOrder.LimitOrder2.Quantity);
 
                     break;
             }
 
-            deserializedMessage.Reset();
-            
+            clientToServerMessage.Reset();
+
         }
+
+
     }
 }

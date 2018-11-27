@@ -30,11 +30,11 @@ namespace MemExchange.Server
             IOrderDispatcher orderDispatcher = new OrderDispatcher(outgoingQueue, logger, new DateService(), orderRepository);
             IIncomingMessageProcessor incomingMessageProcessor = new IncomingMessageProcessor(orderRepository, outgoingQueue, new DateService(), orderDispatcher , new ProtobufSerializer());
             IPerformanceRecorder performanceRecorder = new PerformanceRecorderDirectConsoleOutput(new DateService());
-            IIncomingMessageQueue incomingMessageQueue = new IncomingMessageQueue(logger, incomingMessageProcessor, performanceRecorder);
-            IClientMessagePuller clientMessagePuller = new ClientMessagePuller(logger, new ProtobufSerializer(), incomingMessageQueue);
-
-            incomingMessageQueue.Start();
+            IClientMessagePuller clientMessagePuller = new NatsClientMessagePuller(new ProtobufSerializer(), incomingMessageProcessor);
+            
             clientMessagePuller.Start(9192);
+
+            
 
             Console.WriteLine("Started. Hit any key to quit.");
             Console.ReadKey();
@@ -42,7 +42,7 @@ namespace MemExchange.Server
             Console.WriteLine("Stopping...");
 
             clientMessagePuller.Stop();
-            incomingMessageQueue.Stop();
+            
             outgoingQueue.Stop();
             messagePublisher.Stop();
 

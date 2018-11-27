@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="NATS.Client" Version="0.8.1" />
     <PackageReference Include="NetMQ" Version="4.0.0.197-pre" />
     <PackageReference Include="protobuf-net" Version="2.4.0" />
   </ItemGroup>

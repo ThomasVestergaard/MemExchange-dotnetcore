@@ -1,9 +1,9 @@
-﻿using Disruptor;
-using MemExchange.Server.Incoming;
+﻿using MemExchange.Core.SharedDto.ClientToServer;
 
 namespace MemExchange.Server.Processor
 {
-    public interface IIncomingMessageProcessor : IEventHandler<RingbufferByteArray>
+    public interface IIncomingMessageProcessor
     {
+        void HandleMessage(ClientToServerMessage clientToServerMessage);
     }
 }
