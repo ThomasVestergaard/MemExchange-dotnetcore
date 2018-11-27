@@ -14,16 +14,18 @@ namespace MemExchange.Server.Processor
         private readonly IDateService dateService;
         private readonly IOrderDispatcher dispatcher;
         private readonly ISerializer serializer;
+        private readonly IConfiguration configuration;
         private ClientToServerMessage deserializedMessage;
         private byte[] queueBuffer;
 
-        public IncomingMessageProcessor(IOrderRepository ordeRepository, IOutgoingQueue outgoingQueue, IDateService dateService, IOrderDispatcher dispatcher, ISerializer serializer)
+        public IncomingMessageProcessor(IOrderRepository ordeRepository, IOutgoingQueue outgoingQueue, IDateService dateService, IOrderDispatcher dispatcher, ISerializer serializer, IConfiguration configuration)
         {
             this.ordeRepository = ordeRepository;
             this.outgoingQueue = outgoingQueue;
             this.dateService = dateService;
             this.dispatcher = dispatcher;
             this.serializer = serializer;
+            this.configuration = configuration;
             queueBuffer = new byte[512];
         }
         
@@ -36,7 +38,7 @@ namespace MemExchange.Server.Processor
 
             if (deserializedMessage == null)
                 return;
-
+            
             switch (deserializedMessage.MessageType)
             {
                case ClientToServerMessageTypeEnum.ModifyStopLimitOrder:

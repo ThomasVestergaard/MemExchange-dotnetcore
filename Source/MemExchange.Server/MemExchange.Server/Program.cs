@@ -7,7 +7,6 @@ using MemExchange.Server.Incoming.Logging;
 using MemExchange.Server.Outgoing;
 using MemExchange.Server.Processor;
 using MemExchange.Server.Processor.Book;
-using Serilog.Core;
 
 namespace MemExchange.Server
 {
@@ -15,10 +14,12 @@ namespace MemExchange.Server
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Starting...");
-
+            string symbol = "ABC";
+            
+            IConfiguration configuration = new Configuration(symbol);
 
             ILogger logger = new SerilogLogger();
+            logger.Info($"Starting server with symbol '{symbol}'");
             ISerializer serializer = new ProtobufSerializer();
             IMessagePublisher messagePublisher = new MessagePublisher(logger, serializer);
             IOutgoingQueue outgoingQueue = new OutgoingQueue(logger, messagePublisher);
@@ -27,8 +28,8 @@ namespace MemExchange.Server
             outgoingQueue.Start();
 
             IOrderRepository orderRepository = new OrderRepository();
-            IOrderDispatcher orderDispatcher = new OrderDispatcher(outgoingQueue, logger, new DateService(), orderRepository);
-            IIncomingMessageProcessor incomingMessageProcessor = new IncomingMessageProcessor(orderRepository, outgoingQueue, new DateService(), orderDispatcher , new ProtobufSerializer());
+            IOrderDispatcher orderDispatcher = new OrderDispatcher(outgoingQueue, logger, new DateService(), orderRepository, symbol);
+            IIncomingMessageProcessor incomingMessageProcessor = new IncomingMessageProcessor(orderRepository, outgoingQueue, new DateService(), orderDispatcher , new ProtobufSerializer(), configuration);
             IPerformanceRecorder performanceRecorder = new PerformanceRecorderDirectConsoleOutput(new DateService());
             IIncomingMessageQueue incomingMessageQueue = new IncomingMessageQueue(logger, incomingMessageProcessor, performanceRecorder);
             IClientMessagePuller clientMessagePuller = new ClientMessagePuller(logger, new ProtobufSerializer(), incomingMessageQueue);

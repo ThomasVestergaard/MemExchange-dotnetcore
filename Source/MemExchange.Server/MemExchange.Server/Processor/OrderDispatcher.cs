@@ -1,11 +1,9 @@
-﻿using System.Collections.Generic;
-using MemExchange.Core.Logging;
+﻿using MemExchange.Core.Logging;
 using MemExchange.Server.Common;
 using MemExchange.Server.Outgoing;
 using MemExchange.Server.Processor.Book;
 using MemExchange.Server.Processor.Book.MatchingAlgorithms;
 using MemExchange.Server.Processor.Book.Orders;
-using MemExchange.Server.Processor.Book.Triggers;
 
 namespace MemExchange.Server.Processor
 {
@@ -15,32 +13,46 @@ namespace MemExchange.Server.Processor
         private readonly ILogger logger;
         private readonly IDateService dateService;
         private readonly IOrderRepository orderRepository;
-        public Dictionary<string, IOrderBook> OrderBooks { get; private set; }
-
-        public OrderDispatcher(IOutgoingQueue outgoingQueue, ILogger logger, IDateService dateService, IOrderRepository orderRepository)
+        private readonly string symbol;
+        public IOrderBook OrderBook { get; set; }
+        
+        public OrderDispatcher(IOutgoingQueue outgoingQueue, ILogger logger, IDateService dateService, IOrderRepository orderRepository, string symbol)
         {
             this.outgoingQueue = outgoingQueue;
             this.logger = logger;
             this.dateService = dateService;
             this.orderRepository = orderRepository;
-            OrderBooks = new Dictionary<string, IOrderBook>();
+            this.symbol = symbol.ToUpper();
+
+            var bookMatchingLimitAlgo = new LimitOrderMatchingAlgorithm(dateService);
+            bookMatchingLimitAlgo.AddExecutionsHandler(outgoingQueue.EnqueueClientExecution);
+
+            var bookMatchingMarketAlgo = new MarketOrderMatchingAlgorithm(dateService);
+            bookMatchingMarketAlgo.AddExecutionsHandler(outgoingQueue.EnqueueClientExecution);
+
+            var level1 = new OrderBookBestBidAsk(symbol);
+            level1.RegisterUpdateHandler(outgoingQueue.EnqueueLevel1Update);
+
+            OrderBook= new OrderBook(symbol, bookMatchingLimitAlgo, bookMatchingMarketAlgo, level1);
+
+            
         }
 
         public void HandleMarketOrder(IMarketOrder marketOrder)
         {
             string symbol = marketOrder.Symbol;
-            if (!OrderBooks.ContainsKey(symbol))
+            if (this.symbol != symbol.ToUpper())
                 return;
 
-            OrderBooks[symbol].HandleMarketOrder(marketOrder);
+            OrderBook.HandleMarketOrder(marketOrder);
         }
 
         public void HandleAddStopLimitOrder(IStopLimitOrder stopLimitOrder)
         {
             string symbol = stopLimitOrder.Symbol;
-            if (!OrderBooks.ContainsKey(symbol))
+            if (this.symbol != symbol.ToUpper())
                 return;
-            
+
             stopLimitOrder.RegisterOutgoingQueueDeleteHandler(outgoingQueue.EnqueueDeletedStopLimitOrder);
             outgoingQueue.EnqueueAddedStopLimitOrder(stopLimitOrder);
             stopLimitOrder.Trigger.SetTriggerAction(() =>
@@ -54,48 +66,36 @@ namespace MemExchange.Server.Processor
                 HandleAddLimitOrder(newLimitOrder);
             });
 
-            OrderBooks[symbol].AddStopLimitOrder(stopLimitOrder);
+            OrderBook.AddStopLimitOrder(stopLimitOrder);
         }
 
         public void HandleAddLimitOrder(ILimitOrder limitOrder)
         {
             string symbol = limitOrder.Symbol;
-            if (!OrderBooks.ContainsKey(symbol))
-            {
-                var bookMatchingLimitAlgo = new LimitOrderMatchingAlgorithm(dateService);
-                bookMatchingLimitAlgo.AddExecutionsHandler(outgoingQueue.EnqueueClientExecution);
-
-                var bookMatchingMarketAlgo = new MarketOrderMatchingAlgorithm(dateService);
-                bookMatchingMarketAlgo.AddExecutionsHandler(outgoingQueue.EnqueueClientExecution);
-
-                var level1 = new OrderBookBestBidAsk(symbol);
-                level1.RegisterUpdateHandler(outgoingQueue.EnqueueLevel1Update);
-
-                var book = new OrderBook(symbol, bookMatchingLimitAlgo, bookMatchingMarketAlgo, level1);
-                OrderBooks.Add(symbol, book);
-            }
+            if (this.symbol != symbol.ToUpper())
+                return;
 
             outgoingQueue.EnqueueAddedLimitOrder(limitOrder);
-            limitOrder.RegisterDeleteNotificationHandler(OrderBooks[symbol].RemoveLimitOrder);
-            limitOrder.RegisterFilledNotification(OrderBooks[symbol].RemoveLimitOrder);
-            limitOrder.RegisterModifyNotificationHandler(OrderBooks[symbol].HandleLimitOrderModify);
+            limitOrder.RegisterDeleteNotificationHandler(OrderBook.RemoveLimitOrder);
+            limitOrder.RegisterFilledNotification(OrderBook.RemoveLimitOrder);
+            limitOrder.RegisterModifyNotificationHandler(OrderBook.HandleLimitOrderModify);
             
-            OrderBooks[symbol].AddLimitOrder(limitOrder);
+            OrderBook.AddLimitOrder(limitOrder);
         }
 
         public void HandDuoLimitOrderUpdate(ILimitOrder limitOrder1, double limitOrder1NewPrice, int limitOrder1NewQuantity, ILimitOrder limitOrder2, double limitOrder2NewPrice, int limitOrder2NewQuantity)
         {
-            if (!OrderBooks.ContainsKey(limitOrder1.Symbol))
+            if (this.symbol != symbol.ToUpper())
                 return;
 
-            OrderBooks[limitOrder1.Symbol].SetSuspendLimitOrderMatchingStatus(true);
+            OrderBook.SetSuspendLimitOrderMatchingStatus(true);
 
             limitOrder1.Modify(limitOrder1NewQuantity, limitOrder1NewPrice);
             limitOrder2.Modify(limitOrder2NewQuantity, limitOrder2NewPrice);
 
-            OrderBooks[limitOrder1.Symbol].SetSuspendLimitOrderMatchingStatus(false);
-            OrderBooks[limitOrder1.Symbol].TryMatchLimitOrder(limitOrder1);
-            OrderBooks[limitOrder1.Symbol].TryMatchLimitOrder(limitOrder2);
+            OrderBook.SetSuspendLimitOrderMatchingStatus(false);
+            OrderBook.TryMatchLimitOrder(limitOrder1);
+            OrderBook.TryMatchLimitOrder(limitOrder2);
         }
     }
 }

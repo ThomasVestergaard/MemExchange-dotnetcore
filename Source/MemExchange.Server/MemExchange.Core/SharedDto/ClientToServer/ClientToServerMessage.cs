@@ -1,4 +1,5 @@
-﻿using MemExchange.Core.SharedDto.Orders;
+﻿using System;
+using MemExchange.Core.SharedDto.Orders;
 using ProtoBuf;
 
 namespace MemExchange.Core.SharedDto.ClientToServer
@@ -23,7 +24,7 @@ namespace MemExchange.Core.SharedDto.ClientToServer
 
         [ProtoMember(6)]
         public DuoLimitOrderDto DuoLimitOrder { get; set; }
-
+        
 
         public ClientToServerMessage()
         {
