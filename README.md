@@ -16,7 +16,7 @@ Running locally (blog): http://thomasvestergaard.com/thomas-vestergaard-blog/mem
 # Roadmap
 1. Make server container ready
    - Introduce external message queue (NATS) (in progress)
-   - Remove dependency on disruptor-net framework
+   - Remove dependency on disruptor-net framework (in progress)
    - Publish server container on dockerhub
 
 2. Introduce external cache for orderbook, client orders, trades etc.
