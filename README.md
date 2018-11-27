@@ -15,15 +15,15 @@ Running locally (blog): http://thomasvestergaard.com/thomas-vestergaard-blog/mem
 
 # Roadmap
 
-1. Introduce external cache for orderbook, client orders, trades etc.
+1. Make server handle a single symbol. HAve one running server instance per symbol as scale out model.
+2. Introduce external cache for orderbook, client orders, trades etc.
    - Maybe redis?
-2. Make server container ready
+3. Make server container ready
    - Introduce external message queue (NATS)
    - Remove dependency on disruptor-net framework
-   - Make server handle single symbol (one running server er symbol as scale out model)
    - Publish server container on dockerhub
-3. Introduce http API for all communication with server
-4. Introduce persistance mechanism for server to restore state on crash/restart
+4. Introduce http API for all communication with server
+5. Introduce persistance mechanism for server to restore state on crash/restart
 
 
 ## Getting started
