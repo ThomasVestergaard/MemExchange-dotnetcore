@@ -194,6 +194,7 @@ namespace MemExchange.Server.Processor.Book
                 return;
             
             PriceSlots[limitOrder.Price].AddOrder(limitOrder);
+            limitOrder.RegisterModifyNotificationHandler(HandleLimitOrderModify);
             SetBestBidAndAsk();
         }
 
